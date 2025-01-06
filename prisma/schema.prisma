@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model Employees {
+  id        String      @id @unique  @default(uuid())
+  name      String      @unique // unique constraint
+  firstName String
+  dateCreated DateTime @default(now())  @db.Date
+  department String
+  Attendance Attendances[]
+  AttendancesDuration AttendancesDuration[]
+}
+
+enum AttendanceType {
+  checkIn
+  checkOut
+}
+
+model Attendances {
+  id        Int      @id @default(autoincrement())
+  comment   String?
+  type      AttendanceType @default(checkIn)
+  employeeId String
+  employee  Employees @relation(fields: [employeeId], references: [id])
+  dateCreated DateTime @default(now())
+
+  @@index([employeeId])
+}
+
+model AttendancesDuration {
+  id          Int       @id @default(autoincrement())
+  employeeId  String
+  employee    Employees @relation(fields: [employeeId], references: [id])
+  checkInId   Int       @unique // ID of the corresponding checkIn attendance
+  checkOutId  Int       @unique // ID of the corresponding checkOut attendance
+  duration    Int       // Duration in milliseconds 
+  dateCreated DateTime  @default(now())
+
+  @@index([employeeId])
+  @@unique([checkInId, checkOutId]) // Constraint to ensure that the checkInId and checkOutId are unique
+}
